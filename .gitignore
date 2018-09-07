@@ -1,6 +1,0 @@
-*.class
-.*
-!.gitignore
-compile
-start
-lib
