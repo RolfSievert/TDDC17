@@ -1,0 +1,8 @@
+*.class
+.*
+!.gitignore
+compile
+start
+lib
+tddc17/*
+!MyVacuumAgent.java
