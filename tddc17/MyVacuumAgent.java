@@ -8,6 +8,8 @@ import aima.core.agent.Percept;
 import aima.core.agent.impl.*;
 
 import java.util.Random;
+import java.util.HashSet;
+import java.util.AbstractMap.SimpleEntry;
 
 class MyAgentState
 {
@@ -107,6 +109,8 @@ class MyAgentProgram implements AgentProgram {
 
 	// Here you can define your variables!
 	public int iterationCounter = 100;
+	// Could use a TreeSet with a comparator for sorting if it's required.
+	public HashSet<SimpleEntry<Integer, Integer>> unknownSet= new HashSet<>();
 	public MyAgentState state = new MyAgentState();
 
 	// moves the Agent to a random start position
@@ -166,21 +170,26 @@ class MyAgentProgram implements AgentProgram {
 	    Boolean home = (Boolean)p.getAttribute("home");
 	    System.out.println("percept: " + p);
 
+
 	    // State update based on the percept value and the last action
 	    state.updatePosition((DynamicPercept)percept);
 	    if (bump) {
 			switch (state.agent_direction) {
 			case MyAgentState.NORTH:
 				state.updateWorld(state.agent_x_position,state.agent_y_position-1,state.WALL);
+				unknownSet.remove(new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position-1));
 				break;
 			case MyAgentState.EAST:
 				state.updateWorld(state.agent_x_position+1,state.agent_y_position,state.WALL);
+				unknownSet.remove(new SimpleEntry<Integer, Integer>(state.agent_x_position+1, state.agent_y_position));
 				break;
 			case MyAgentState.SOUTH:
 				state.updateWorld(state.agent_x_position,state.agent_y_position+1,state.WALL);
+				unknownSet.remove(new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position+1));
 				break;
 			case MyAgentState.WEST:
 				state.updateWorld(state.agent_x_position-1,state.agent_y_position,state.WALL);
+				unknownSet.remove(new SimpleEntry<Integer, Integer>(state.agent_x_position-1, state.agent_y_position-1));
 				break;
 			}
 	    }
@@ -188,9 +197,22 @@ class MyAgentProgram implements AgentProgram {
 	    	state.updateWorld(state.agent_x_position,state.agent_y_position,state.DIRT);
 	    else
 	    	state.updateWorld(state.agent_x_position,state.agent_y_position,state.CLEAR);
+				unknownSet.remove(new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position));
 
 	    state.printWorldDebug();
 
+			for(int i = -1; i < 2; i++){
+				for(int j = -1; j < 2; j++){
+					if(inBounds(state.agent_x_position + i, state.agent_y_position + j)
+					&& state.world[state.agent_x_position + i][state.agent_y_position + j] == state.UNKNOWN){
+						unknownSet.add(new SimpleEntry<Integer, Integer>(state.agent_x_position + i, state.agent_y_position + j));
+					}
+				}
+			}
+
+			for (SimpleEntry<Integer, Integer> set : unknownSet) {
+				System.out.println("" + set.getKey() + "" + set.getValue() );
+			}
 
 	    // Next action selection based on the percept value
 	    if (dirt)
@@ -201,6 +223,14 @@ class MyAgentProgram implements AgentProgram {
 	    }
 	    else
 	    {
+				// 1. Lägga in alla unknowns vi går förbi i en lista.
+				// 1. Välja den närmaste unknown i listan.
+				// 2. Hitta en väg så att man kan gå dit, lista med [(x,y), (x+1, y), (x+1, y+1)]
+				// 3. Röra sig mot nästa position i listan.
+				// 4. -> 3 om inte framme vid unknown då -> Suck eller 1.
+				//
+
+
 	    	if (bump)
 	    	{
 					System.out.println("BUMP -> choosing TURN_RIGHT action");
@@ -214,8 +244,14 @@ class MyAgentProgram implements AgentProgram {
 	    		state.agent_last_action=state.ACTION_MOVE_FORWARD;
 	    		return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
 	    	}
+
 	    }
 	}
+
+	public boolean inBounds(int x, int y){
+		return (x < state.world.length && x > -1 && y < state.world.length && y > -1);
+	}
+
 	public void updateDirection(int action){
 		//final int ACTION_NONE 			= 0;
 		//final int ACTION_MOVE_FORWARD 	= 1;
@@ -255,6 +291,12 @@ class MyAgentProgram implements AgentProgram {
 				}
 		}
 	}
+
+	/*
+	public Tuple(int ,int) closestUnknown(){
+
+	}
+	*/
 }
 
 public class MyVacuumAgent extends AbstractAgent {
