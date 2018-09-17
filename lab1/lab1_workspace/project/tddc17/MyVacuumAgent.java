@@ -2,14 +2,19 @@ package tddc17;
 
 
 import aima.core.environment.liuvacuum.*;
+import aima.core.util.datastructure.Queue;
 import aima.core.agent.Action;
 import aima.core.agent.AgentProgram;
 import aima.core.agent.Percept;
 import aima.core.agent.impl.*;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Random;
 import java.util.HashSet;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.TreeMap;
 
 class MyAgentState
 {
@@ -26,9 +31,12 @@ class MyAgentState
 	final int ACTION_TURN_LEFT 		= 3;
 	final int ACTION_SUCK	 		= 4;
 	
-	final int SEARCH 			= 0; // Searching for the next unknown cell 
-	final int MOVE		 		= 1; // Moving to chosen unknown cell
-	final int RETURN 			= 2; // Returning to home cell
+	public static final int SEARCH 		= 0; // Searching for the next unknown cell 
+	public static final int MOVE		= 1; // Moving to chosen unknown cell
+	public static final int RETURN 		= 2; // Returning to home cell
+	
+	public SimpleEntry<Integer, Integer> agent_goal; // current goal
+	public Queue<SimpleEntry<Integer, Integer>> agent_path; // path to goal, not taking into account the need to turn.
 
 	public int agent_mode 		= 0; // Starting in search mode
 									 //	where we find our next target unknown cell
@@ -50,6 +58,7 @@ class MyAgentState
 		world[1][1] = HOME;
 		agent_last_action = ACTION_NONE;
 	}
+	
 	// Based on the last action and the received percept updates the x & y agent position
 	public void updatePosition(DynamicPercept p)
 	{
@@ -213,9 +222,9 @@ class MyAgentProgram implements AgentProgram {
 	    updateUnknownSet();
 	    
 	    System.out.println("X=Y");
-	    for(SimpleEntry<Integer, Integer> set : unknownSet )
+	    for(SimpleEntry<Integer, Integer> elem : unknownSet )
 	    {
-	    	System.out.println(set);
+	    	System.out.println(elem);
 	    }
 	    
 	    // Next action selection based on the percept value
@@ -233,8 +242,13 @@ class MyAgentProgram implements AgentProgram {
 				// 3. Röra sig mot nästa position i listan.
 				// 4. -> 3 om inte framme vid unknown då -> Suck eller 1.
 				//
-
-
+	    	if(state.agent_mode == MyAgentState.SEARCH)
+	    	{
+	    		state.agent_goal = chooseGoal();
+	    		state.agent_path = createPath();
+	    	}
+	    	
+	    	/*
 	    	if (bump)
 	    	{
 				System.out.println("BUMP -> choosing TURN_RIGHT action");
@@ -248,6 +262,7 @@ class MyAgentProgram implements AgentProgram {
 	    		state.agent_last_action=state.ACTION_MOVE_FORWARD;
 	    		return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
 	    	}
+	    	*/
 
 	    }
 	}
@@ -255,6 +270,77 @@ class MyAgentProgram implements AgentProgram {
 	public boolean inBounds(int x, int y){
 		return (x < state.world.length && x > -1 && y < state.world.length && y > -1);
 	}
+	
+	public double distFromAgent(int x , int y){
+		return Math.sqrt(Math.pow(x - state.agent_x_position, 2) + Math.pow(y - state.agent_y_position, 2));
+	}
+	
+	public double cellDist(SimpleEntry<Integer, Integer> start, SimpleEntry<Integer, Integer> goal){
+		return Math.sqrt(Math.pow(start.getKey() - goal.getKey(), 2) + Math.pow(start.getValue() - goal.getValue(), 2))
+	}
+	
+	public SimpleEntry<Integer, Integer> chooseGoal(){
+		SimpleEntry<Integer, Integer> goal = null;
+		double goalDistance = 1000;
+		
+		for(SimpleEntry<Integer, Integer> elem : unknownSet){
+			double currentDistance = distFromAgent (elem.getKey(), elem.getValue());
+			if(currentDistance < goalDistance){
+				goal = elem;
+			}
+		}
+		return goal;
+	}
+	
+	public LinkedList<SimpleEntry<Integer, Integer>> A_star(SimpleEntry<Integer, Integer> start, SimpleEntry<Integer, Integer> goal){
+		
+		//The set of nodes already evaluated
+		HashSet<SimpleEntry<Integer, Integer>> closedSet = new HashSet<SimpleEntry<Integer, Integer>>();
+		
+		// The set of currently discovered nodes that are not evaluated yet.
+	    // Initially, only the start node is known.
+	    HashSet<SimpleEntry<Integer, Integer>> openSet = new HashSet<SimpleEntry<Integer, Integer>>();
+	    openSet.add(start);
+	    
+	    // For each node, which node it can most efficiently be reached from.
+	    // If a node can be reached from many nodes, cameFrom will eventually contain the
+	    // most efficient previous step.
+	    HashMap<SimpleEntry<Integer, Integer>, HashMap<Integer, Integer>> cameFrom = new HashMap<SimpleEntry<Integer, Integer>, HashMap<Integer, Integer>>();
+	    
+	    // For each node, the cost of getting from the start node to that node.
+	    Map<SimpleEntry<Integer, Integer>, Double> gScore = new TreeMap<SimpleEntry<Integer, Integer>, Double>();
+	    // The cost of going from start to start is zero.
+	    gScore.put(start, (double) 0);
+	    
+	    // For each node, the total cost of getting from the start node to the goal
+	    // by passing by that node. That value is partly known, partly heuristic.
+	    Map<SimpleEntry<Integer, Integer>, Double> fScore = new TreeMap<SimpleEntry<Integer, Integer>, Double>();
+	    
+	    // For the first node, that value is completely heuristic.
+	    fScore.put(start, cellDist(start, goal));
+	    
+	    while (openSet.size() != 0){
+	    	SimpleEntry<Integer, Integer> current = chooseCurrent(fScore, openSet);
+	    }
+	}
+	
+	public LinkedList<SimpleEntry<Integer, Integer>> reconstructPath(HashMap<SimpleEntry<Integer, Integer>, Double> cameFrom, SimpleEntry<Integer, Integer> current){
+	/*
+	 * 	total_path := {current}
+	 *	while current in cameFrom.Keys:
+     *  	current := cameFrom[current]
+     *  	total_path.append(current)
+   	 *	return total_path
+	 */
+	LinkedList<SimpleEntry<Integer, Integer>> queuePath = new LinkedList<SimpleEntry<Integer, Integer>>();
+		while()
+		
+	}
+	
+	public SimpleEntry<Integer, Integer> chooseCurrent(Map<SimpleEntry<Integer, Integer>, Double> fScore, HashSet<SimpleEntry<Integer, Integer>> openSet ){
+		
+	}
+	
 	
 	public void updateUnknownSet(){
 		// Can be turned into a for-loop
