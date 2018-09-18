@@ -8,6 +8,7 @@ import aima.core.agent.AgentProgram;
 import aima.core.agent.Percept;
 import aima.core.agent.impl.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -281,7 +282,7 @@ class MyAgentProgram implements AgentProgram {
 	
 	public SimpleEntry<Integer, Integer> chooseGoal(){
 		SimpleEntry<Integer, Integer> goal = null;
-		double goalDistance = 1000;
+		double goalDistance = Double.POSITIVE_INFINITY;
 		
 		for(SimpleEntry<Integer, Integer> elem : unknownSet){
 			double currentDistance = distFromAgent (elem.getKey(), elem.getValue());
@@ -305,7 +306,7 @@ class MyAgentProgram implements AgentProgram {
 	    // For each node, which node it can most efficiently be reached from.
 	    // If a node can be reached from many nodes, cameFrom will eventually contain the
 	    // most efficient previous step.
-	    HashMap<SimpleEntry<Integer, Integer>, HashMap<Integer, Integer>> cameFrom = new HashMap<SimpleEntry<Integer, Integer>, HashMap<Integer, Integer>>();
+	    HashMap<SimpleEntry<Integer, Integer>, SimpleEntry<Integer, Integer>> cameFrom = new HashMap<SimpleEntry<Integer, Integer>, SimpleEntry<Integer, Integer>>();
 	    
 	    // For each node, the cost of getting from the start node to that node.
 	    Map<SimpleEntry<Integer, Integer>, Double> gScore = new TreeMap<SimpleEntry<Integer, Integer>, Double>();
@@ -321,10 +322,40 @@ class MyAgentProgram implements AgentProgram {
 	    
 	    while (openSet.size() != 0){
 	    	SimpleEntry<Integer, Integer> current = chooseCurrent(fScore, openSet);
+	    	
+	    	if(current == goal){
+	    		return reconstructPath(cameFrom, current);
+	    	}
+	    	
+	    	openSet.remove(current);
+	    	closedSet.add(current);
+	    	ArrayList<SimpleEntry<Integer, Integer>> neighborList = neighbors(current);
+	    	
+	    	for(SimpleEntry<Integer, Integer> neighbour : neighborList){
+	    		if(closedSet.contains(neighbour)){
+	    			continue; // Ignore the neighbour which is already evaluated.
+	    		}
+	    		
+	    		// The distance from start to a neighbour
+	    		double tentativeGScore = gScore.get(neighbour) + cellDist(current, neighbour);
+	    		
+	    		if(!openSet.contains(neighbour)){ // Discover a new node
+	    			openSet.add(neighbour); 
+	    		}
+	    		else if( tentativeGScore >= gScore.get(neighbour)){ // This is not a better path.
+	    			continue;
+	    		}
+	    		
+	    		cameFrom.put(neighbour, current);
+	    		gScore.put(neighbour, tentativeGScore);
+	    		fScore.put(neighbour, gScore.get(neighbour) + cellDist(neighbour, goal));
+	    		
+	    	}
+	    	
 	    }
 	}
 	
-	public LinkedList<SimpleEntry<Integer, Integer>> reconstructPath(HashMap<SimpleEntry<Integer, Integer>, Double> cameFrom, SimpleEntry<Integer, Integer> current){
+	public LinkedList<SimpleEntry<Integer, Integer>> reconstructPath(HashMap<SimpleEntry<Integer, Integer>, SimpleEntry<Integer, Integer>> cameFrom, SimpleEntry<Integer, Integer> current){
 	/*
 	 * 	total_path := {current}
 	 *	while current in cameFrom.Keys:
@@ -338,7 +369,37 @@ class MyAgentProgram implements AgentProgram {
 	}
 	
 	public SimpleEntry<Integer, Integer> chooseCurrent(Map<SimpleEntry<Integer, Integer>, Double> fScore, HashSet<SimpleEntry<Integer, Integer>> openSet ){
-		
+		SimpleEntry<Integer, Integer> bestEntry = null;
+		double lowestScore = Double.POSITIVE_INFINITY;
+		for( Map.Entry<SimpleEntry<Integer, Integer>, Double> entry :fScore.entrySet()){
+			if(openSet.contains(entry.getKey()) && entry.getValue() < lowestScore){
+				bestEntry = entry.getKey();
+				lowestScore = entry.getValue();
+			}
+		}
+		return bestEntry;
+	}
+	
+	public ArrayList<SimpleEntry<Integer, Integer>> neighbors(SimpleEntry<Integer, Integer> cell){
+		ArrayList<SimpleEntry<Integer, Integer>> neighborList = new ArrayList<SimpleEntry<Integer, Integer>>();
+		// Can be turned into a for-loop
+	    // Above
+	    if(inBounds(state.agent_x_position, state.agent_y_position -1)){
+			neighborList.add(new SimpleEntry<Integer, Integer>(state.agent_x_position , state.agent_y_position -1));
+		}
+	    // Right	    
+	    if(inBounds(state.agent_x_position + 1, state.agent_y_position )){
+			neighborList.add(new SimpleEntry<Integer, Integer>(state.agent_x_position + 1, state.agent_y_position));
+		}
+	    // Left
+	    if(inBounds(state.agent_x_position -1, state.agent_y_position)){
+			neighborList.add(new SimpleEntry<Integer, Integer>(state.agent_x_position -1, state.agent_y_position));
+		}
+	    // Below
+	    if(inBounds(state.agent_x_position, state.agent_y_position +1)){
+			neighborList.add(new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position +1));
+		}
+	    return neighborList;
 	}
 	
 	
