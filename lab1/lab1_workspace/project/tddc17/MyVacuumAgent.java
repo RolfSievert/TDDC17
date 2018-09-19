@@ -245,8 +245,15 @@ class MyAgentProgram implements AgentProgram {
 				//
 	    	if(state.agent_mode == MyAgentState.SEARCH)
 	    	{
+	    		SimpleEntry<Integer, Integer> current_pos = new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position); 
+	    		System.out.println("Before choose Goal");
 	    		state.agent_goal = chooseGoal();
-	    		state.agent_path = createPath();
+	    		System.out.println("Before A*");
+	    		LinkedList<SimpleEntry<Integer, Integer>> path = A_star(current_pos, state.agent_goal);
+	    		System.out.println("After A*");
+	    		System.out.println("Goal:" + state.agent_goal);
+	    		System.out.println("First : " + path.peek() + "  Length :" + path.size());
+	    		//state.agent_path = createPath();
 	    	}
 	    	
 	    	/*
@@ -264,8 +271,9 @@ class MyAgentProgram implements AgentProgram {
 	    		return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
 	    	}
 	    	*/
-
+	    	
 	    }
+	    return NoOpAction.NO_OP;
 	}
 
 	public boolean inBounds(int x, int y){
@@ -277,7 +285,7 @@ class MyAgentProgram implements AgentProgram {
 	}
 	
 	public double cellDist(SimpleEntry<Integer, Integer> start, SimpleEntry<Integer, Integer> goal){
-		return Math.sqrt(Math.pow(start.getKey() - goal.getKey(), 2) + Math.pow(start.getValue() - goal.getValue(), 2))
+		return Math.sqrt(Math.pow(start.getKey() - goal.getKey(), 2) + Math.pow(start.getValue() - goal.getValue(), 2));
 	}
 	
 	public SimpleEntry<Integer, Integer> chooseGoal(){
@@ -309,35 +317,42 @@ class MyAgentProgram implements AgentProgram {
 	    HashMap<SimpleEntry<Integer, Integer>, SimpleEntry<Integer, Integer>> cameFrom = new HashMap<SimpleEntry<Integer, Integer>, SimpleEntry<Integer, Integer>>();
 	    
 	    // For each node, the cost of getting from the start node to that node.
-	    Map<SimpleEntry<Integer, Integer>, Double> gScore = new TreeMap<SimpleEntry<Integer, Integer>, Double>();
+	    HashMap<SimpleEntry<Integer, Integer>, Double> gScore = new HashMap<SimpleEntry<Integer, Integer>, Double>();
 	    // The cost of going from start to start is zero.
 	    gScore.put(start, (double) 0);
 	    
 	    // For each node, the total cost of getting from the start node to the goal
 	    // by passing by that node. That value is partly known, partly heuristic.
-	    Map<SimpleEntry<Integer, Integer>, Double> fScore = new TreeMap<SimpleEntry<Integer, Integer>, Double>();
+	    HashMap<SimpleEntry<Integer, Integer>, Double> fScore = new HashMap<SimpleEntry<Integer, Integer>, Double>();
 	    
 	    // For the first node, that value is completely heuristic.
 	    fScore.put(start, cellDist(start, goal));
 	    
+	    System.out.println("After initilization");
 	    while (openSet.size() != 0){
 	    	SimpleEntry<Integer, Integer> current = chooseCurrent(fScore, openSet);
+	    	System.out.println("After chooseCurrent");
+	    	System.out.println(current);
 	    	
-	    	if(current == goal){
+	    	if(current.getKey() == goal.getKey() && current.getValue() == goal.getValue()){
+	    		System.out.println("Current == goal");
 	    		return reconstructPath(cameFrom, current);
 	    	}
 	    	
 	    	openSet.remove(current);
 	    	closedSet.add(current);
+	    	System.out.println("Before neighbor");
 	    	ArrayList<SimpleEntry<Integer, Integer>> neighborList = neighbors(current);
+	    	System.out.println("After neighbor");
 	    	
 	    	for(SimpleEntry<Integer, Integer> neighbour : neighborList){
 	    		if(closedSet.contains(neighbour)){
+	    			System.out.println("closedSet contains neighbor");
 	    			continue; // Ignore the neighbour which is already evaluated.
 	    		}
 	    		
 	    		// The distance from start to a neighbour
-	    		double tentativeGScore = gScore.get(neighbour) + cellDist(current, neighbour);
+	    		double tentativeGScore = gScore.get(current) + cellDist(current, neighbour);
 	    		
 	    		if(!openSet.contains(neighbour)){ // Discover a new node
 	    			openSet.add(neighbour); 
@@ -353,19 +368,17 @@ class MyAgentProgram implements AgentProgram {
 	    	}
 	    	
 	    }
+	  return null;
 	}
 	
 	public LinkedList<SimpleEntry<Integer, Integer>> reconstructPath(HashMap<SimpleEntry<Integer, Integer>, SimpleEntry<Integer, Integer>> cameFrom, SimpleEntry<Integer, Integer> current){
-	/*
-	 * 	total_path := {current}
-	 *	while current in cameFrom.Keys:
-     *  	current := cameFrom[current]
-     *  	total_path.append(current)
-   	 *	return total_path
-	 */
 	LinkedList<SimpleEntry<Integer, Integer>> queuePath = new LinkedList<SimpleEntry<Integer, Integer>>();
-		while()
-		
+	queuePath.add(current);
+	while(cameFrom.containsKey(current)){
+		current = cameFrom.get(current);
+		queuePath.addFirst(current);
+	}
+	return queuePath;
 	}
 	
 	public SimpleEntry<Integer, Integer> chooseCurrent(Map<SimpleEntry<Integer, Integer>, Double> fScore, HashSet<SimpleEntry<Integer, Integer>> openSet ){
