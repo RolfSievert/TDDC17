@@ -1,6 +1,8 @@
 package tddc17;
 
 
+
+
 import aima.core.environment.liuvacuum.*;
 import aima.core.util.datastructure.Queue;
 import aima.core.agent.Action;
@@ -16,6 +18,17 @@ import java.util.Random;
 import java.util.HashSet;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.TreeMap;
+
+class Pos
+{
+	public int x;
+	public int y;
+	
+	public Pos(int x, int y){
+		this.x =x;
+		this.y=y;
+	}
+}
 
 class MyAgentState
 {
@@ -37,7 +50,7 @@ class MyAgentState
 	public static final int RETURN 		= 2; // Returning to home cell
 	
 	public SimpleEntry<Integer, Integer> agent_goal; // current goal
-	public Queue<SimpleEntry<Integer, Integer>> agent_path; // path to goal, not taking into account the need to turn.
+	public LinkedList<SimpleEntry<Integer, Integer>> agent_path; // path to goal, not taking into account the need to turn.
 
 	public int agent_mode 		= 0; // Starting in search mode
 									 //	where we find our next target unknown cell
@@ -124,7 +137,7 @@ class MyAgentProgram implements AgentProgram {
 	private Random random_generator = new Random();
 
 	// Here you can define your variables!
-	public int iterationCounter = 100;
+	public int iterationCounter = 10000;
 	// Could use a TreeSet with a comparator for sorting if it's required.
 	public HashSet<SimpleEntry<Integer, Integer>> unknownSet= new HashSet<SimpleEntry<Integer, Integer>>();
 	public MyAgentState state = new MyAgentState();
@@ -208,6 +221,7 @@ class MyAgentProgram implements AgentProgram {
 				unknownSet.remove(new SimpleEntry<Integer, Integer>(state.agent_x_position-1, state.agent_y_position));
 				break;
 			}
+			state.agent_mode = MyAgentState.SEARCH;
 	    }
 	    if (dirt){
 	    	state.updateWorld(state.agent_x_position,state.agent_y_position,state.DIRT);
@@ -243,19 +257,74 @@ class MyAgentProgram implements AgentProgram {
 				// 3. Röra sig mot nästa position i listan.
 				// 4. -> 3 om inte framme vid unknown då -> Suck eller 1.
 				//
-	    	if(state.agent_mode == MyAgentState.SEARCH)
-	    	{
-	    		SimpleEntry<Integer, Integer> current_pos = new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position); 
-	    		System.out.println("Before choose Goal");
-	    		state.agent_goal = chooseGoal();
-	    		System.out.println("Before A*");
-	    		LinkedList<SimpleEntry<Integer, Integer>> path = A_star(current_pos, state.agent_goal);
-	    		System.out.println("After A*");
-	    		System.out.println("Goal:" + state.agent_goal);
-	    		System.out.println("First : " + path.peek() + "  Length :" + path.size());
-	    		//state.agent_path = createPath();
-	    	}
+	    	SimpleEntry<Integer, Integer> current_pos = new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position); 
 	    	
+	    	if(state.agent_mode == MyAgentState.SEARCH)
+	    	{		
+	    		state.agent_goal = chooseGoal();
+	    		System.out.println("Choose goal result :  " + state.agent_goal);
+	    		state.agent_path = A_star(current_pos, state.agent_goal);
+	    		System.out.println("Peek : " + state.agent_path.peek());
+	    		state.agent_mode = MyAgentState.MOVE;
+	    		System.out.println("SEARCH");
+	    	}
+	    	if(state.agent_mode == MyAgentState.MOVE)
+	    	{
+	    		LinkedList<SimpleEntry<Integer, Integer>> path = state.agent_path;
+	    		
+	    		int goal_x = path.peek().getKey();
+	    		int goal_y = path.peek().getValue();
+	    		System.out.println("Goal: " + goal_x + ","+ goal_y);
+	    		int pos_x = current_pos.getKey();
+	    		int pos_y = current_pos.getValue();
+	    		System.out.println("Position: " + pos_x + "," + pos_y);
+	    		
+	    		int dy = goal_y - pos_y;
+	    		int dx = goal_x - pos_x;
+	    		System.out.println("Distance to goal: " + dx + "," + dy);
+	    		
+	    		int dir = state.agent_direction;
+	    		// Rotation variables
+	    		boolean r_right = false;
+	    		//boolean r_left = false;
+	    		if (dy < 0) {
+	    			if (dir != MyAgentState.NORTH){
+	    				r_right = true;
+	    			}
+	    		}
+	    		else if(dy > 0) {
+	    			if (dir != MyAgentState.SOUTH){
+	    				r_right = true;
+	    			}
+	    		}
+	    		else if(dx > 0) {
+	    			if (dir != MyAgentState.EAST){
+	    				r_right = true;
+	    			}
+	    		}
+	    		else if(dx < 0) {
+	    			if (dir != MyAgentState.WEST){
+	    				r_right = true;
+	    			}
+	    		}
+	    		if (r_right){
+	    			state.agent_last_action=state.ACTION_TURN_RIGHT;
+					updateDirection(state.ACTION_TURN_RIGHT);
+					System.out.println("ROTATE");
+			    	return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
+	    		}
+	    		else{
+	    			state.agent_last_action=state.ACTION_MOVE_FORWARD;
+	    			System.out.println("FORWARD");
+	    			state.agent_path.pop();
+	    			if(path.size() == 0){
+	    				System.out.println("AT GOAL! :D");
+		    			state.agent_mode = MyAgentState.SEARCH;
+	    			}
+		    		return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
+	    		}
+	    	}
+	    		    	
 	    	/*
 	    	if (bump)
 	    	{
@@ -264,6 +333,7 @@ class MyAgentProgram implements AgentProgram {
 				updateDirection(state.ACTION_TURN_RIGHT);
 		    	return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
 	    	}
+	    
 	    	else
 	    	{
 				System.out.println("Nothing -> choosing MOVE_FORWARD action");
@@ -271,6 +341,7 @@ class MyAgentProgram implements AgentProgram {
 	    		return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
 	    	}
 	    	*/
+	    	
 	    	
 	    }
 	    return NoOpAction.NO_OP;
@@ -328,26 +399,19 @@ class MyAgentProgram implements AgentProgram {
 	    // For the first node, that value is completely heuristic.
 	    fScore.put(start, cellDist(start, goal));
 	    
-	    System.out.println("After initilization");
 	    while (openSet.size() != 0){
 	    	SimpleEntry<Integer, Integer> current = chooseCurrent(fScore, openSet);
-	    	System.out.println("After chooseCurrent");
-	    	System.out.println(current);
 	    	
 	    	if(current.getKey() == goal.getKey() && current.getValue() == goal.getValue()){
-	    		System.out.println("Current == goal");
 	    		return reconstructPath(cameFrom, current);
 	    	}
 	    	
 	    	openSet.remove(current);
 	    	closedSet.add(current);
-	    	System.out.println("Before neighbor");
 	    	ArrayList<SimpleEntry<Integer, Integer>> neighborList = neighbors(current);
-	    	System.out.println("After neighbor");
 	    	
 	    	for(SimpleEntry<Integer, Integer> neighbour : neighborList){
 	    		if(closedSet.contains(neighbour)){
-	    			System.out.println("closedSet contains neighbor");
 	    			continue; // Ignore the neighbour which is already evaluated.
 	    		}
 	    		
@@ -374,10 +438,19 @@ class MyAgentProgram implements AgentProgram {
 	public LinkedList<SimpleEntry<Integer, Integer>> reconstructPath(HashMap<SimpleEntry<Integer, Integer>, SimpleEntry<Integer, Integer>> cameFrom, SimpleEntry<Integer, Integer> current){
 	LinkedList<SimpleEntry<Integer, Integer>> queuePath = new LinkedList<SimpleEntry<Integer, Integer>>();
 	queuePath.add(current);
+	System.out.println("reconstruct path :  " + current);
 	while(cameFrom.containsKey(current)){
 		current = cameFrom.get(current);
+		System.out.println("reconstruct path :  " + current);
 		queuePath.addFirst(current);
 	}
+	queuePath.pop();
+	/*
+	for(SimpleEntry<Integer, Integer> elem : queuePath){
+		System.out.println("queuePath index " + i + " elem :" + elem);
+		i++;
+	}
+	*/
 	return queuePath;
 	}
 	
@@ -397,20 +470,23 @@ class MyAgentProgram implements AgentProgram {
 		ArrayList<SimpleEntry<Integer, Integer>> neighborList = new ArrayList<SimpleEntry<Integer, Integer>>();
 		// Can be turned into a for-loop
 	    // Above
-	    if(inBounds(state.agent_x_position, state.agent_y_position -1)){
-			neighborList.add(new SimpleEntry<Integer, Integer>(state.agent_x_position , state.agent_y_position -1));
+		
+		int x = cell.getKey();
+		int y = cell.getValue();
+	    if(inBounds(x, y -1) && state.world[x][y - 1] != state.WALL ){
+			neighborList.add(new SimpleEntry<Integer, Integer>(x , y - 1));
 		}
 	    // Right	    
-	    if(inBounds(state.agent_x_position + 1, state.agent_y_position )){
-			neighborList.add(new SimpleEntry<Integer, Integer>(state.agent_x_position + 1, state.agent_y_position));
+	    if(inBounds(x + 1, y) && state.world[x + 1][y] != state.WALL){
+			neighborList.add(new SimpleEntry<Integer, Integer>(x + 1, y));
 		}
 	    // Left
-	    if(inBounds(state.agent_x_position -1, state.agent_y_position)){
-			neighborList.add(new SimpleEntry<Integer, Integer>(state.agent_x_position -1, state.agent_y_position));
+	    if(inBounds(x - 1, y) && state.world[x - 1][y] != state.WALL){
+			neighborList.add(new SimpleEntry<Integer, Integer>(x - 1, y));
 		}
 	    // Below
-	    if(inBounds(state.agent_x_position, state.agent_y_position +1)){
-			neighborList.add(new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position +1));
+	    if(inBounds(x, y + 1) && state.world[x][y + 1] != state.WALL){
+			neighborList.add(new SimpleEntry<Integer, Integer>(x, y + 1));
 		}
 	    return neighborList;
 	}
