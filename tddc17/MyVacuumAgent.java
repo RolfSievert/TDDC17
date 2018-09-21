@@ -55,7 +55,7 @@ class MyAgentState
 				break;
 			case MyAgentState.EAST:
 				agent_x_position++;
-				System.
+				System.out.println("ADDED");
 				break;
 			case MyAgentState.SOUTH:
 				agent_y_position++;
@@ -199,6 +199,7 @@ class MyAgentProgram implements AgentProgram {
 	    	if (bump)
 	    	{
 	    		state.agent_last_action=state.ACTION_TURN_RIGHT;
+	    		state.agent_direction=
 		    	return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
 	    	}
 	    	else
