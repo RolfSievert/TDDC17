@@ -45,15 +45,23 @@ class MyAgentState
 	final int ACTION_TURN_LEFT 		= 3;
 	final int ACTION_SUCK	 		= 4;
 	
+	// States for the agent 
 	public static final int SEARCH 		= 0; // Searching for the next unknown cell 
 	public static final int MOVE		= 1; // Moving to chosen unknown cell
-	public static final int RETURN 		= 2; // Returning to home cell
+	public static final int COMPLETE 	= 2; // Done
 	
+	// Our current state
+	public int agent_mode 				= 0; // Starting in search mode
+										 //	where we find our next target unknown cell
+	
+	// boolean used to determine when we are finished
+	public boolean last = false;
+	
+	// The chosen goal for A*
 	public SimpleEntry<Integer, Integer> agent_goal; // current goal
-	public LinkedList<SimpleEntry<Integer, Integer>> agent_path; // path to goal, not taking into account the need to turn.
-
-	public int agent_mode 		= 0; // Starting in search mode
-									 //	where we find our next target unknown cell
+	// path to goal produced by A*, not taking into account the need to turn.
+	public LinkedList<SimpleEntry<Integer, Integer>> agent_path; 
+	
 	public int agent_x_position = 1;
 	public int agent_y_position = 1;
 	public int agent_last_action = ACTION_NONE;
@@ -103,10 +111,6 @@ class MyAgentState
 		if(x_position < world.length && x_position > -1 && y_position < world.length && y_position > -1){
 		world[x_position][y_position] = info;
 		}
-		else
-		{
-			System.out.println("x_position : " + x_position + ", y_position : " + y_position);
-		}
 	}
 
 	public void printWorldDebug()
@@ -139,7 +143,9 @@ class MyAgentProgram implements AgentProgram {
 	// Here you can define your variables!
 	public int iterationCounter = 10000;
 	// Could use a TreeSet with a comparator for sorting if it's required.
+	// Set containing the unknown cells the vacuum has cleaned.
 	public HashSet<SimpleEntry<Integer, Integer>> unknownSet= new HashSet<SimpleEntry<Integer, Integer>>();
+	
 	public MyAgentState state = new MyAgentState();
 
 	// moves the Agent to a random start position
@@ -167,6 +173,9 @@ class MyAgentProgram implements AgentProgram {
 
 	@Override
 	public Action execute(Percept percept) {
+		if(state.agent_mode == MyAgentState.COMPLETE){
+			return NoOpAction.NO_OP;
+		}
 
 		// DO NOT REMOVE this if condition!!!
     	if (initnialRandomActions>0) {
@@ -223,24 +232,19 @@ class MyAgentProgram implements AgentProgram {
 			}
 			state.agent_mode = MyAgentState.SEARCH;
 	    }
-	    if (dirt){
+	    if (dirt && !home){
 	    	state.updateWorld(state.agent_x_position,state.agent_y_position,state.DIRT);
 	    }
-	    else
-	    {
+	    else if(!home){
 	    	state.updateWorld(state.agent_x_position,state.agent_y_position,state.CLEAR);
-			unknownSet.remove(new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position));
 	    }
+	    
+	   unknownSet.remove(new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position));
+
 
 	    state.printWorldDebug();
 	    
 	    updateUnknownSet();
-	    
-	    System.out.println("X=Y");
-	    for(SimpleEntry<Integer, Integer> elem : unknownSet )
-	    {
-	    	System.out.println(elem);
-	    }
 	    
 	    // Next action selection based on the percept value
 	    if (dirt)
@@ -251,37 +255,27 @@ class MyAgentProgram implements AgentProgram {
 	    }
 	    else
 	    {
-				// 1. Lägga in alla unknowns vi går förbi i en lista.
-				// 1. Välja den närmaste unknown i listan.
-				// 2. Hitta en väg så att man kan gå dit, lista med [(x,y), (x+1, y), (x+1, y+1)]
-				// 3. Röra sig mot nästa position i listan.
-				// 4. -> 3 om inte framme vid unknown då -> Suck eller 1.
-				//
 	    	SimpleEntry<Integer, Integer> current_pos = new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position); 
 	    	
 	    	if(state.agent_mode == MyAgentState.SEARCH)
 	    	{		
 	    		state.agent_goal = chooseGoal();
-	    		System.out.println("Choose goal result :  " + state.agent_goal);
 	    		state.agent_path = A_star(current_pos, state.agent_goal);
-	    		System.out.println("Peek : " + state.agent_path.peek());
 	    		state.agent_mode = MyAgentState.MOVE;
-	    		System.out.println("SEARCH");
 	    	}
 	    	if(state.agent_mode == MyAgentState.MOVE)
 	    	{
 	    		LinkedList<SimpleEntry<Integer, Integer>> path = state.agent_path;
-	    		
+	    		if(path.size() == 0){
+	    			return NoOpAction.NO_OP;
+	    		}
 	    		int goal_x = path.peek().getKey();
 	    		int goal_y = path.peek().getValue();
-	    		System.out.println("Goal: " + goal_x + ","+ goal_y);
 	    		int pos_x = current_pos.getKey();
 	    		int pos_y = current_pos.getValue();
-	    		System.out.println("Position: " + pos_x + "," + pos_y);
 	    		
 	    		int dy = goal_y - pos_y;
 	    		int dx = goal_x - pos_x;
-	    		System.out.println("Distance to goal: " + dx + "," + dy);
 	    		
 	    		int dir = state.agent_direction;
 	    		// Rotation variables
@@ -310,39 +304,20 @@ class MyAgentProgram implements AgentProgram {
 	    		if (r_right){
 	    			state.agent_last_action=state.ACTION_TURN_RIGHT;
 					updateDirection(state.ACTION_TURN_RIGHT);
-					System.out.println("ROTATE");
 			    	return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
 	    		}
 	    		else{
 	    			state.agent_last_action=state.ACTION_MOVE_FORWARD;
-	    			System.out.println("FORWARD");
 	    			state.agent_path.pop();
 	    			if(path.size() == 0){
-	    				System.out.println("AT GOAL! :D");
 		    			state.agent_mode = MyAgentState.SEARCH;
+		    			if(state.last){
+		    				state.agent_mode = MyAgentState.COMPLETE;
+		    			}
 	    			}
 		    		return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
 	    		}
 	    	}
-	    		    	
-	    	/*
-	    	if (bump)
-	    	{
-				System.out.println("BUMP -> choosing TURN_RIGHT action");
-	    		state.agent_last_action=state.ACTION_TURN_RIGHT;
-				updateDirection(state.ACTION_TURN_RIGHT);
-		    	return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
-	    	}
-	    
-	    	else
-	    	{
-				System.out.println("Nothing -> choosing MOVE_FORWARD action");
-	    		state.agent_last_action=state.ACTION_MOVE_FORWARD;
-	    		return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
-	    	}
-	    	*/
-	    	
-	    	
 	    }
 	    return NoOpAction.NO_OP;
 	}
@@ -352,7 +327,7 @@ class MyAgentProgram implements AgentProgram {
 	}
 	
 	public double distFromAgent(int x , int y){
-		return Math.sqrt(Math.pow(x - state.agent_x_position, 2) + Math.pow(y - state.agent_y_position, 2));
+		return Math.sqrt(Math.pow(state.agent_x_position - x, 2) + Math.pow(state.agent_y_position - y, 2));
 	}
 	
 	public double cellDist(SimpleEntry<Integer, Integer> start, SimpleEntry<Integer, Integer> goal){
@@ -367,7 +342,12 @@ class MyAgentProgram implements AgentProgram {
 			double currentDistance = distFromAgent (elem.getKey(), elem.getValue());
 			if(currentDistance < goalDistance){
 				goal = elem;
+				goalDistance = currentDistance;
 			}
+		}
+		if (goal == null){
+			goal = new SimpleEntry<Integer, Integer>(1, 1);
+			state.last = true;
 		}
 		return goal;
 	}
@@ -438,19 +418,11 @@ class MyAgentProgram implements AgentProgram {
 	public LinkedList<SimpleEntry<Integer, Integer>> reconstructPath(HashMap<SimpleEntry<Integer, Integer>, SimpleEntry<Integer, Integer>> cameFrom, SimpleEntry<Integer, Integer> current){
 	LinkedList<SimpleEntry<Integer, Integer>> queuePath = new LinkedList<SimpleEntry<Integer, Integer>>();
 	queuePath.add(current);
-	System.out.println("reconstruct path :  " + current);
 	while(cameFrom.containsKey(current)){
 		current = cameFrom.get(current);
-		System.out.println("reconstruct path :  " + current);
 		queuePath.addFirst(current);
 	}
 	queuePath.pop();
-	/*
-	for(SimpleEntry<Integer, Integer> elem : queuePath){
-		System.out.println("queuePath index " + i + " elem :" + elem);
-		i++;
-	}
-	*/
 	return queuePath;
 	}
 	
@@ -458,7 +430,7 @@ class MyAgentProgram implements AgentProgram {
 		SimpleEntry<Integer, Integer> bestEntry = null;
 		double lowestScore = Double.POSITIVE_INFINITY;
 		for( Map.Entry<SimpleEntry<Integer, Integer>, Double> entry :fScore.entrySet()){
-			if(openSet.contains(entry.getKey()) && entry.getValue() < lowestScore){
+			if(openSet.contains(entry.getKey()) && (entry.getValue() < lowestScore)){
 				bestEntry = entry.getKey();
 				lowestScore = entry.getValue();
 			}
@@ -496,22 +468,26 @@ class MyAgentProgram implements AgentProgram {
 		// Can be turned into a for-loop
 	    // Above
 	    if(inBounds(state.agent_x_position, state.agent_y_position -1)
-			&& state.world[state.agent_x_position][state.agent_y_position -1] == state.UNKNOWN){
+			&& (state.world[state.agent_x_position][state.agent_y_position -1] == state.UNKNOWN
+			|| state.world[state.agent_x_position][state.agent_y_position -1] == state.HOME)){
 			unknownSet.add(new SimpleEntry<Integer, Integer>(state.agent_x_position , state.agent_y_position -1));
 		}
 	    // Right	    
 	    if(inBounds(state.agent_x_position + 1, state.agent_y_position )
-	    	&& state.world[state.agent_x_position + 1][state.agent_y_position] == state.UNKNOWN){
+	    	&& (state.world[state.agent_x_position + 1][state.agent_y_position] == state.UNKNOWN
+	    	|| state.world[state.agent_x_position + 1][state.agent_y_position] == state.HOME)){
 			unknownSet.add(new SimpleEntry<Integer, Integer>(state.agent_x_position + 1, state.agent_y_position));
 		}
 	    // Left
 	    if(inBounds(state.agent_x_position -1, state.agent_y_position)
-			&& state.world[state.agent_x_position -1][state.agent_y_position] == state.UNKNOWN){
+			&& (state.world[state.agent_x_position -1][state.agent_y_position] == state.UNKNOWN
+			|| state.world[state.agent_x_position -1][state.agent_y_position] == state.HOME)){
 			unknownSet.add(new SimpleEntry<Integer, Integer>(state.agent_x_position -1, state.agent_y_position));
 		}
 	    // Below
 	    if(inBounds(state.agent_x_position, state.agent_y_position +1)
-			&& state.world[state.agent_x_position][state.agent_y_position +1] == state.UNKNOWN){
+			&& (state.world[state.agent_x_position][state.agent_y_position +1] == state.UNKNOWN
+			|| state.world[state.agent_x_position][state.agent_y_position +1] == state.HOME)){
 			unknownSet.add(new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position +1));
 		}
 	}
@@ -555,11 +531,6 @@ class MyAgentProgram implements AgentProgram {
 				}
 		}
 	}
-
-	/*
-	public Tuple(int ,int) closestUnknown(){
-	}
-	*/
 }
 
 public class MyVacuumAgent extends AbstractAgent {
