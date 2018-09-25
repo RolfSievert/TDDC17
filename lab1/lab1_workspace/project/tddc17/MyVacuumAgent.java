@@ -19,17 +19,6 @@ import java.util.HashSet;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.TreeMap;
 
-class Pos
-{
-	public int x;
-	public int y;
-	
-	public Pos(int x, int y){
-		this.x =x;
-		this.y=y;
-	}
-}
-
 class MyAgentState
 {
 	public int[][] world = new int[30][30];
