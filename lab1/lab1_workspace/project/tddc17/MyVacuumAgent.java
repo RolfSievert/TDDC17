@@ -1,8 +1,5 @@
 package tddc17;
 
-
-
-
 import aima.core.environment.liuvacuum.*;
 import aima.core.util.datastructure.Queue;
 import aima.core.agent.Action;
@@ -18,17 +15,6 @@ import java.util.Random;
 import java.util.HashSet;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.TreeMap;
-
-class Pos
-{
-	public int x;
-	public int y;
-	
-	public Pos(int x, int y){
-		this.x =x;
-		this.y=y;
-	}
-}
 
 class MyAgentState
 {
@@ -200,7 +186,7 @@ class MyAgentProgram implements AgentProgram {
 	    iterationCounter--;
 
 	    if (iterationCounter==0)
-	    	return NoOpAction.NO_OP;
+		return NoOpAction.NO_OP;
 
 	    DynamicPercept p = (DynamicPercept) percept;
 	    Boolean bump = (Boolean)p.getAttribute("bump");
@@ -239,7 +225,7 @@ class MyAgentProgram implements AgentProgram {
 	    	state.updateWorld(state.agent_x_position,state.agent_y_position,state.CLEAR);
 	    }
 	    
-	   unknownSet.remove(new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position));
+	   	unknownSet.remove(new SimpleEntry<Integer, Integer>(state.agent_x_position, state.agent_y_position));
 
 
 	    state.printWorldDebug();
@@ -319,7 +305,7 @@ class MyAgentProgram implements AgentProgram {
 	    		}
 	    	}
 	    }
-	    return NoOpAction.NO_OP;
+	    	return NoOpAction.NO_OP;
 	}
 
 	public boolean inBounds(int x, int y){
@@ -354,10 +340,10 @@ class MyAgentProgram implements AgentProgram {
 	
 	public LinkedList<SimpleEntry<Integer, Integer>> A_star(SimpleEntry<Integer, Integer> start, SimpleEntry<Integer, Integer> goal){
 		
-		//The set of nodes already evaluated
-		HashSet<SimpleEntry<Integer, Integer>> closedSet = new HashSet<SimpleEntry<Integer, Integer>>();
-		
-		// The set of currently discovered nodes that are not evaluated yet.
+	    //The set of nodes already evaluated
+	    HashSet<SimpleEntry<Integer, Integer>> closedSet = new HashSet<SimpleEntry<Integer, Integer>>();
+
+	    // The set of currently discovered nodes that are not evaluated yet.
 	    // Initially, only the start node is known.
 	    HashSet<SimpleEntry<Integer, Integer>> openSet = new HashSet<SimpleEntry<Integer, Integer>>();
 	    openSet.add(start);
