@@ -43,8 +43,8 @@
         :parameters (?o ?t ?l) ;; Packet, Truck, Location
         :precondition (and
             (packet ?o)
-            (big ?o)
-            (big ?t)
+            (large ?o)
+            (large ?t)
             (truck ?t)
             (location ?l)
             (at ?t ?l)
