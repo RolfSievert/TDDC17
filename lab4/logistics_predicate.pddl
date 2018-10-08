@@ -37,4 +37,20 @@
             (not (at ?p ?l))
         )
     )
+
+    (:action UnloadTruck
+        :parameters (?o ?t ?l) ;; Object, Truck, Location
+        :precondition (and
+            (packet ?o)
+            (truck ?t)
+            (location ?l)
+            (in ?o ?t)
+            (at ?t ?l)
+        )
+        :effect (and
+            (at ?p ?l)
+            (not (in ?p ?t))
+        )
+    )
+
 )
