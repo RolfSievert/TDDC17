@@ -14,90 +14,94 @@
         (office ?o)
         (airport ?a)
 
+        ;; Objects
+        (object ?o)
+
         ;; Relations
-        (at ?obj ?location)
-        (in ?packet ?vehicle)
+        (at_v ?vehicle ?location)
+        (at_o ?object ?location)
+        (in ?object ?vehicle)
         (loc ?l ?c) ;; Location in city
 
         ;; Attributes
-        (small ?obj)
-        (large ?obj)
+        (small ?object)
+        (large ?object)
     )
 
     (:action LoadSmallTruck
         :parameters (?o ?t ?l) ;; Packet, Truck, Location
         :precondition (and
-            (packet ?o)
+            (object ?o)
             (small ?o)
             (truck ?t)
             (location ?l)
-            (at ?t ?l)
-            (at ?o ?l)
+            (at_v ?t ?l)
+            (at_o ?o ?l)
         )
         :effect (and
             (in ?o ?t)
-            (not (at ?o ?l))
+            (not (at_o ?o ?l))
         )
     )
     (:action LoadBigTruck
         :parameters (?o ?t ?l) ;; Packet, Truck, Location
         :precondition (and
-            (packet ?o)
+            (object ?o)
             (large ?o)
             (large ?t)
             (truck ?t)
             (location ?l)
-            (at ?t ?l)
-            (at ?o ?l)
+            (at_v ?t ?l)
+            (at_o ?o ?l)
         )
         :effect (and
             (in ?o ?t)
-            (not (at ?o ?l))
+            (not (at_o ?o ?l))
         )
     )
 
     (:action LoadAirplane
         :parameters (?o ?a ?l) ;; Packet, Airplane, Location
         :precondition (and
-            (packet ?o)
+            (object ?o)
             (airplane ?a)
             (airport ?l)
-            (at ?a ?l)
-            (at ?o ?l)
+            (at_v ?a ?l)
+            (at_o ?o ?l)
         )
         :effect (and
             (in ?o ?a)
-            (not (at ?o ?l))
+            (not (at_v ?o ?l))
         )
     )
 
     (:action LoadTrain
         :parameters (?o ?t ?l) ;; Packet, Train, Location (trainstation)
         :precondition (and
-          (packet ?o)
+          (object ?o)
           (train ?t)
           (trainstation ?l)
-          (at ?t ?l)
-          (at ?o ?l)
+          (at_v ?t ?l)
+          (at_o ?o ?l)
         )
         :effect (and
-          (in ?o ?a)
-          (not (at ?o ?l))
+          (in ?o ?t)
+          (not (at_o ?o ?l))
         )
     )
 
     (:action Unload
-        :parameter (?o ?v ?l) ;; Packet, Train, Location
-        ;precondition(and
-          (packet ?o)
+        :parameters (?o ?v ?l) ;; Packet, Train, Location
+        :precondition(and
+          (object ?o)
           (vehicle ?v)
           (location ?l)
-          (at ?v ?l)
+          (at_v ?v ?l)
           (in ?o ?v)
         )
         :effect (and
           (not (in ?o ?v))
-          (at ?o ?l)
+          (at_o ?o ?l)
         )
     )
 
@@ -110,10 +114,11 @@
             (city ?c)
             (loc ?from ?c)
             (loc ?to ?c)
+            (at_v ?t ?from)
         )
         :effect (and
-            (at ?t ?to)
-            (not (at ?t ?from))
+            (at_v ?t ?to)
+            (not (at_v ?t ?from))
         )
     )
     (:action MoveTrain
@@ -122,22 +127,24 @@
             (train ?t)
             (trainstation ?from)
             (trainstation ?to)
+            (at_v ?t ?from)
         )
         :effect (and
-            (at ?t ?to)
-            (not (at ?t ?from))
+            (at_v ?t ?to)
+            (not (at_v ?t ?from))
         )
     )
     (:action MoveAirplane
         :parameters (?a ?from ?to) ;; Airplane, From, to
         :precondition (and
-            (airplane ?t)
+            (airplane ?a)
             (airport ?from)
             (airport ?to)
+            (at_v ?a ?from)
         )
         :effect (and
-            (at ?a ?to)
-            (not (at ?a ?from))
+            (at_v ?a ?to)
+            (not (at_v ?a ?from))
         )
     )
 )

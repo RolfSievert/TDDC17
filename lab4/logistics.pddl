@@ -48,18 +48,19 @@
 
      ;; The actual initial state of the problem, which specifies the
      ;; initial locations of all packages and all vehicles:
-     (at packet1 office1) (at packet2 office3) (at packet3 office2) (at packet4 office2)
-     (at packet5 office3) (at packet6 office1)
-     (at truck1 trainstation1) (at truck2 airport2) (at truck3 office3)
-     (at truck4 office1)
-     (at airplane1 airport3) (at airplane2 airport2)
-     (at train1 trainstation1) (at train2 trainstation2)
+     (at_o packet1 office1) (at_o packet2 office3) (at_o packet3 office2)
+     (at_o packet4 office2)
+     (at_o packet5 office3) (at_o packet6 office1)
+     (at_v truck1 trainstation1) (at_v truck2 airport2) (at_v truck3 office3)
+     (at_v truck4 office1)
+     (at_v airplane1 airport3) (at_v airplane2 airport2)
+     (at_v train1 trainstation1) (at_v train2 trainstation2)
     )
 
     ;; The goal is to have both packages delivered to their destinations:
     (:goal  (and
-              (at packet1 office2) (at packet2 office2) (at packet3 office1)
-              (at packet4 office3) (at packet5 office1) (at packet6 office2)
+              (at_o packet1 office2) (at_o packet2 office2) (at_o packet3 office1)
+              (at_o packet4 office3) (at_o packet5 office1) (at_o packet6 office2)
             )
     )
 )
