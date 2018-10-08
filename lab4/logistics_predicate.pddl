@@ -39,9 +39,10 @@
             (not (at ?o ?l))
         )
     )
+
     (:action LoadAirplane
         :parameters (?o ?a ?l) ;; Packet, Airplane, Location
-        :precondition (and 
+        :precondition (and
             (packet ?o)
             (airplane ?a)
             (airport ?l)
@@ -53,34 +54,34 @@
             (not (at ?o ?l))
         )
     )
+
     (:action LoadTrain
         :parameters (?o ?t ?l) ;; Packet, Train, Location (trainstation)
-        :precondition (and 
-            (packet ?o)
-            (train ?t)
-            (trainstation ?l)
-            (at ?t ?l)
-            (at ?o ?l)
-        )
-        :effect (and
-            (in ?o ?a)
-            (not (at ?o ?l))
-        )
-    )
-
-    (:action UnloadTruck
-        :parameters (?o ?t ?l) ;; Object, Truck, Location
         :precondition (and
-            (packet ?o)
-            (truck ?t)
-            (location ?l)
-            (in ?o ?t)
-            (at ?t ?l)
+          (packet ?o)
+          (train ?t)
+          (trainstation ?l)
+          (at ?t ?l)
+          (at ?o ?l)
         )
         :effect (and
-            (at ?p ?l)
-            (not (in ?p ?t))
+          (in ?o ?a)
+          (not (at ?o ?l))
         )
     )
 
+    (:action Unload
+        :parameter (?o ?v ?l) ;; Packet, Train, Location
+        ;precondition(and
+          (packet ?o)
+          (vehicle ?v)
+          (location ?l)
+          (at ?v ?l)
+          (in ?o ?v)
+        )
+        :effect (and
+          (not (in ?o ?v))
+          (at ?o ?l)
+        )
+        )
 )
