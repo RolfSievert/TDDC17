@@ -21,14 +21,30 @@
 
         ;; Attributes
         (small ?obj)
-        (medium ?obj)
         (large ?obj)
     )
 
-    (:action LoadTruck
+    (:action LoadSmallTruck
         :parameters (?o ?t ?l) ;; Packet, Truck, Location
         :precondition (and
             (packet ?o)
+            (small ?o)
+            (truck ?t)
+            (location ?l)
+            (at ?t ?l)
+            (at ?o ?l)
+        )
+        :effect (and
+            (in ?o ?t)
+            (not (at ?o ?l))
+        )
+    )
+    (:action LoadBigTruck
+        :parameters (?o ?t ?l) ;; Packet, Truck, Location
+        :precondition (and
+            (packet ?o)
+            (big ?o)
+            (big ?t)
             (truck ?t)
             (location ?l)
             (at ?t ?l)
@@ -83,5 +99,45 @@
           (not (in ?o ?v))
           (at ?o ?l)
         )
+    )
+
+    (:action MoveTruck
+        :parameters (?t ?from ?to ?c) ;; Truck, From city, to city
+        :precondition (and
+            (truck ?t)
+            (location ?from)
+            (location ?to)
+            (city ?c)
+            (loc ?from ?c)
+            (loc ?to ?c)
         )
+        :effect (and
+            (at ?t ?to)
+            (not (at ?t ?from))
+        )
+    )
+    (:action MoveTrain
+        :parameters (?t ?from ?to) ;; Train, From, to
+        :precondition (and
+            (train ?t)
+            (trainstation ?from)
+            (trainstation ?to)
+        )
+        :effect (and
+            (at ?t ?to)
+            (not (at ?t ?from))
+        )
+    )
+    (:action MoveAirplane
+        :parameters (?a ?from ?to) ;; Airplane, From, to
+        :precondition (and
+            (airplane ?t)
+            (airport ?from)
+            (airport ?to)
+        )
+        :effect (and
+            (at ?a ?to)
+            (not (at ?a ?from))
+        )
+    )
 )
