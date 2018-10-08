@@ -67,4 +67,40 @@
             (not (at ?o ?l))
         )
     )
+    (:action MoveTruck
+        :parameters (?t ?from ?to) ;; Truck, From, to
+        :precondition (and
+            (truck ?t)
+            (location ?from)
+            (location ?to)
+        )
+        :effect (and
+            (at ?t ?to)
+            (not (at ?t ?from))
+        )
+    )
+    (:action MoveTrain
+        :parameters (?t ?from ?to) ;; Train, From, to
+        :precondition (and
+            (train ?t)
+            (trainstation ?from)
+            (trainstation ?to)
+        )
+        :effect (and
+            (at ?t ?to)
+            (not (at ?t ?from))
+        )
+    )
+    (:action MoveAirplane
+        :parameters (?a ?from ?to) ;; Airplane, From, to
+        :precondition (and
+            (airplane ?t)
+            (airport ?from)
+            (airport ?to)
+        )
+        :effect (and
+            (at ?a ?to)
+            (not (at ?a ?from))
+        )
+    )
 )
