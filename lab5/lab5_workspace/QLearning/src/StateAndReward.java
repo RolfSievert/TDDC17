@@ -35,9 +35,45 @@ public class StateAndReward {
 	public static String getStateHover(double angle, double vx, double vy) {
 
 		/* TODO: IMPLEMENT THIS FUNCTION */
-
-		String state = "OneStateToRuleThemAll2";
+		/*
+		String a;
+		double angle_padding = 4;
+		if (angle < -angle_padding){
+			a ="AngleLeft";
+		}
+		else if (angle > angle_padding){
+			a = "AngleRight";
+		}
+		else {
+			a = "AngleStable";
+		}
 		
+		String x;
+		double x_padding = 10;
+		if (vx < -x_padding){
+			x="GoingLeft";
+		}
+		else if (vx > x_padding){
+			x = "GoingRight";
+		}
+		else {
+			x = "XStable";
+		}
+		
+		String y;
+		double y_padding = 10;
+		if (vy < -y_padding){
+			y="GoingUp";
+		}
+		else if (vy > y_padding){
+			y = "GoingDown";
+		}
+		else {
+			y = "YStable";
+		}
+		*/
+		
+		String state = angle + " " + vx + " " + vy;
 		return state;
 	}
 
@@ -46,7 +82,7 @@ public class StateAndReward {
 
 		/* TODO: IMPLEMENT THIS FUNCTION */
 		
-		double reward = 0;
+		double reward = -Math.pow(Math.abs(angle), 2) -Math.abs(vx) -Math.pow(Math.abs(vy),3);
 
 		return reward;
 	}

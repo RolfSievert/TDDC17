@@ -107,14 +107,25 @@ public class QLearningController extends Controller {
 		iteration++;
 		
 		if (!paused) {
-			String new_state = StateAndReward.getStateAngle(angle.getValue(), vx.getValue(), vy.getValue());
+			int angleNrValues = 101;
+			int vxNrValues = 21;
+			int vyNrValues = 101;
+			int discAngle = StateAndReward.discretize2(angle.getValue(), angleNrValues, -Math.PI, Math.PI);
+			discAngle -= (int) Math.floor(angleNrValues/2);
+			int discVx = StateAndReward.discretize2(vx.getValue(), vxNrValues, -20, 20);
+			discVx -= (int) Math.floor(vxNrValues/2);
+			int discVy = StateAndReward.discretize2(vy.getValue(), vyNrValues, -20, 20);
+			discVy -= (int) Math.floor(vyNrValues/2);
+			
+			//System.out.println("discAngle: " + discAngle);
+			String new_state = StateAndReward.getStateHover(discAngle, discVx, discVy);
 
 			/* Repeat the chosen action for a while, hoping to reach a new state. This is a trick to speed up learning on this problem. */
 			action_counter++;
 			if (new_state.equals(previous_state) && action_counter < REPEAT_ACTION_MAX) {
 				return;
 			}
-			double previous_reward = StateAndReward.getRewardAngle(previous_angle, previous_vx, previous_vy);
+			double previous_reward = StateAndReward.getRewardHover(previous_angle, previous_vx, previous_vy);
 			action_counter = 0;
 
 			/* The agent is in a new state, do learning and action selection */
@@ -155,9 +166,9 @@ public class QLearningController extends Controller {
 							+ Ntable.get(prev_stateaction) + " times.");
 				}
 				
-				previous_vy = vy.getValue();
-				previous_vx = vx.getValue();
-				previous_angle = angle.getValue();
+				previous_vy = discVy;
+				previous_vx = discVx;
+				previous_angle = discAngle;
 				previous_action = action;
 			}
 			previous_state = new_state;
