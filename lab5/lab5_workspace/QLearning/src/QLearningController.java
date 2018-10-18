@@ -24,7 +24,7 @@ public class QLearningController extends Controller {
 	RocketEngine middleEngine;
 	RocketEngine rightEngine;
 
-	final static int NUM_ACTIONS = 8; /* The takeAction function must be changed if this is modified */
+	final static int NUM_ACTIONS = 4; /* The takeAction function must be changed if this is modified */
 	
 	/* Keep track of the previous state and action */
 	String previous_state = null;
@@ -89,6 +89,8 @@ public class QLearningController extends Controller {
 		/* TODO: Remember to change NUM_ACTIONS constant to reflect the number of actions (including 0, no action) */
 		
 		/* TODO: IMPLEMENT THIS FUNCTION */
+		
+		/*
 		int temp = action;
 		boolean right = (temp % 2) == 1 ? true : false;
 		temp = temp/2;
@@ -99,6 +101,30 @@ public class QLearningController extends Controller {
 		middleEngine.setBursting(middle);
 		leftEngine.setBursting(left);
 		rightEngine.setBursting(right);
+		*/
+		
+		switch(action){
+		case 0:
+			middleEngine.setBursting(false);
+			leftEngine.setBursting(false);
+			rightEngine.setBursting(false);
+			break;
+		case 1:
+			middleEngine.setBursting(true);
+			leftEngine.setBursting(false);
+			rightEngine.setBursting(false);
+			break;
+		case 2:
+			middleEngine.setBursting(false);
+			leftEngine.setBursting(true);
+			rightEngine.setBursting(false);
+			break;
+		case 3:
+			middleEngine.setBursting(false);
+			leftEngine.setBursting(false);
+			rightEngine.setBursting(true);
+			break;
+		}
 		
 	}
 
@@ -107,14 +133,14 @@ public class QLearningController extends Controller {
 		iteration++;
 		
 		if (!paused) {
-			int angleNrValues = 101;
-			int vxNrValues = 21;
-			int vyNrValues = 101;
+			int angleNrValues = 23;
+			int vxNrValues = 3;
+			int vyNrValues = 17;
 			int discAngle = StateAndReward.discretize2(angle.getValue(), angleNrValues, -Math.PI, Math.PI);
 			discAngle -= (int) Math.floor(angleNrValues/2);
-			int discVx = StateAndReward.discretize2(vx.getValue(), vxNrValues, -20, 20);
+			int discVx = StateAndReward.discretize2(vx.getValue(), vxNrValues, -4, 4);
 			discVx -= (int) Math.floor(vxNrValues/2);
-			int discVy = StateAndReward.discretize2(vy.getValue(), vyNrValues, -20, 20);
+			int discVy = StateAndReward.discretize2(vy.getValue(), vyNrValues, -5, 5 );
 			discVy -= (int) Math.floor(vyNrValues/2);
 			
 			//System.out.println("discAngle: " + discAngle);
@@ -125,7 +151,7 @@ public class QLearningController extends Controller {
 			if (new_state.equals(previous_state) && action_counter < REPEAT_ACTION_MAX) {
 				return;
 			}
-			double previous_reward = StateAndReward.getRewardHover(previous_angle, previous_vx, previous_vy);
+			double previous_reward = StateAndReward.getRewardHover(previous_angle/(angleNrValues/2), previous_vx/(vxNrValues/2), previous_vy/(vyNrValues/2));
 			action_counter = 0;
 
 			/* The agent is in a new state, do learning and action selection */
@@ -146,7 +172,7 @@ public class QLearningController extends Controller {
 
 				
 				/* TODO: IMPLEMENT Q-UPDATE HERE! */
-				double new_val = Qtable.get(prev_stateaction) + alpha(iteration)*Ntable.get(prev_stateaction) 
+				double new_val = Qtable.get(prev_stateaction) + alpha(Ntable.get(prev_stateaction)) 
 						* (previous_reward + GAMMA_DISCOUNT_FACTOR * getMaxActionQValue(new_state) - Qtable.get(prev_stateaction));
 				Qtable.put(prev_stateaction, new_val);
 				

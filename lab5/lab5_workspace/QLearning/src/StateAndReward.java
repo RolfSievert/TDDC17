@@ -37,7 +37,7 @@ public class StateAndReward {
 		/* TODO: IMPLEMENT THIS FUNCTION */
 		/*
 		String a;
-		double angle_padding = 4;
+		double angle_padding = 8;
 		if (angle < -angle_padding){
 			a ="AngleLeft";
 		}
@@ -49,7 +49,7 @@ public class StateAndReward {
 		}
 		
 		String x;
-		double x_padding = 10;
+		double x_padding = 1;
 		if (vx < -x_padding){
 			x="GoingLeft";
 		}
@@ -79,10 +79,14 @@ public class StateAndReward {
 
 	/* Reward function for the full hover controller */
 	public static double getRewardHover(double angle, double vx, double vy) {
-
-		/* TODO: IMPLEMENT THIS FUNCTION */
-		
-		double reward = -Math.pow(Math.abs(angle), 2) -Math.abs(vx) -Math.pow(Math.abs(vy),3);
+		// Values are between -1 and 1
+		double a = 50;
+		double x = 2;
+		double y = 10;
+		double angle_reward = a*(1 - Math.abs(angle));
+		double vx_reward = x*(1 - Math.abs(vx));
+		double vy_reward = y*(1 - Math.abs(vy));
+		double reward = angle_reward + vx_reward + vy_reward;
 
 		return reward;
 	}
